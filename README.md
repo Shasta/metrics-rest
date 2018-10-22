@@ -1,25 +1,20 @@
-# Metrics Relay
+# Metrics REST API
 
 ## Overview
 
-The trusted metrics relay is an API REST, that allows to check if the electric counter metadata is correctly stored in IPFS, and saves a backup to a MongoDB instance, to be able to recreate all the metrics history if IPFS goes down in an hypothecal case.
+Trusted REST api that allows to check if the electric counter metadata is correctly stored in IPFS, and saves a backup to a MongoDB instance, to be able to recreate all the metrics history if IPFS goes down in an hypothecal case. 
 
 ## Getting Started
 
 Clone the repo:
 ```sh
-git clone git@github.com:Shasta/MetricsRelay.git
-cd MetricsRelay
-```
-
-Install yarn:
-```js
-npm install -g yarn
+git clone git@github.com:Shasta/metrics-rest.git
+cd metrics-rest
 ```
 
 Install dependencies:
 ```sh
-yarn
+npm install
 ```
 
 Set environment (vars):
@@ -30,10 +25,10 @@ cp .env.example .env
 Start server:
 ```sh
 # Start server
-yarn start
+npm start
 
 # Selectively set DEBUG env var to get logs
-DEBUG=metrics-relay:* yarn start
+DEBUG=metrics-rest:* npm start
 ```
 Refer [debug](https://www.npmjs.com/package/debug) to know how to selectively turn on logs.
 
@@ -41,47 +36,39 @@ Refer [debug](https://www.npmjs.com/package/debug) to know how to selectively tu
 Tests:
 ```sh
 # Run tests written in ES6 
-yarn test
+npm run test
 
 # Run test along with code coverage
-yarn test:coverage
+npm run test:coverage
 
 # Run tests on file change
-yarn test:watch
+npm run test:watch
 
 # Run tests enforcing code coverage (configured via .istanbul.yml)
-yarn test:check-coverage
+npm run test:check-coverage
 ```
 
 Lint:
 ```sh
 # Lint code with ESLint
-yarn lint
+npm run lint
 
 # Run lint on any file change
-yarn lint:watch
+npm run lint:watch
 ```
 
-Other gulp tasks:
-```sh
-# Wipe out dist and coverage directory
-gulp clean
-
-# Default task: Wipes out dist and coverage directory. Compiles using babel.
-gulp
-```
 
 ##### Deployment
 
 ```sh
 # compile to ES5
-1. yarn build
+1. npm run build
 
 # upload dist/ to your server
 2. scp -rp dist/ user@dest:/path
 
 # install production dependencies only
-3. yarn --production
+3. NODE_ENV=production npm run start
 
 # Use any process manager to start your services
 4. pm2 start dist/index.js
