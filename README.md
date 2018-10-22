@@ -2,7 +2,7 @@
 
 ## Overview
 
-The trusted metrics relay is an API REST, that allows to check if the electric counter metadata is correctly stored in IPFS, and saves a backup to a MongoDB instance, to be able to recreate all the metrics history if IPFS goes down in an hypothecal case.
+Trusted REST api that allows to check if the electric counter metadata is correctly stored in IPFS, and saves a backup to a MongoDB instance, to be able to recreate all the metrics history if IPFS goes down in an hypothecal case. 
 
 ## Getting Started
 
