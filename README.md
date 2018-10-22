@@ -1,4 +1,4 @@
-# Metrics Relay
+# Metrics REST API
 
 ## Overview
 
