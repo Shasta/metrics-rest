@@ -1,6 +1,7 @@
 const express = require('express');
-const userRoutes = require('./server/user/user.route');
-const authRoutes = require('./server/auth/auth.route');
+// const userRoutes = require('./server/user/user.route');
+// const authRoutes = require('./server/auth/auth.route');
+const metricsRoutes = require('./server/metrics-proof/metricProof.route');
 
 const router = express.Router(); // eslint-disable-line new-cap
 
@@ -12,9 +13,13 @@ router.get('/health-check', (req, res) =>
 );
 
 // mount user routes at /users
-router.use('/users', userRoutes);
+// router.use('/users', userRoutes);
+
+// mount metrics routes at /metrics
+router.use('/metrics', metricsRoutes);
 
 // mount auth routes at /auth
-router.use('/auth', authRoutes);
+// router.use('/auth', authRoutes);
+
 
 module.exports = router;

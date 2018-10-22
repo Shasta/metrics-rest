@@ -1,4 +1,0 @@
-export {
-  checkProof,
-  backupProof
-}

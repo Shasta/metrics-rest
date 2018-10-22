@@ -24,7 +24,7 @@ services:
     # Overwrite any env var defined in .env file (if required)
     environment:
       - MONGO_HOST=mongodb://mongo/express-mongoose-es6-rest-api-test
-      - DEBUG=express-mongoose-es6-rest-api:*
+      - DEBUG=metrics-rest:*
 
     # Link to containers in another service.
     # Links also express dependency between services in the same way as depends_on,

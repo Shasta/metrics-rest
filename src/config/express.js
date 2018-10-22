@@ -1,4 +1,5 @@
 const express = require('express');
+require('express-async-errors');
 const logger = require('morgan');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
@@ -77,11 +78,13 @@ if (config.env !== 'test') {
 }
 
 // error handler, send stacktrace only during development
-app.use((err, req, res, next) => // eslint-disable-line no-unused-vars
+app.use((err, req, res, next) => {// eslint-disable-line no-unused-vars
+  console.log('alo?¿')
+  console.log(err)
   res.status(err.status).json({
     message: err.isPublic ? err.message : httpStatus[err.status],
     stack: config.env === 'development' ? err.stack : {}
   })
-);
+});
 
 module.exports = app;

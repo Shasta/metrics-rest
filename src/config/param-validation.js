@@ -26,5 +26,16 @@ module.exports = {
       username: Joi.string().required(),
       password: Joi.string().required()
     }
+  },
+  singleMetric: {
+    body: {
+      hardware_id: Joi.string().required(),
+      ipfs_hash: Joi.string().required(),
+      metrics: Joi.object().keys({
+        watts_consumed: Joi.number().required(),
+        watts_produced: Joi.number().required(),
+        timestamp: Joi.number().required()
+      })
+    }
   }
 };
