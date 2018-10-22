@@ -21,7 +21,7 @@ after((done) => {
 before(function (done) {
   setTimeout(function(){
     done();
-  }, 1000);
+  }, 500);
 });
 
 describe('## Metric Proof APIs', () => {
@@ -61,7 +61,6 @@ describe('## Metric Proof APIs', () => {
         .send(invalid_hash_metrics)
         .expect(httpStatus.BAD_REQUEST)
         .then((res) => {
-          console.log(res.body)
           expect(res.body.message).to.equal('IPFS hash not valid');
         })
     );
