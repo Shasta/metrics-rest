@@ -6,7 +6,7 @@ import MetricProof from './metricProof.model';
 
 const getMetricProof = rawMetric => {
   const metricProof = _.pick(rawMetric, ['hardware_id', 'ipfs_hash'])
-  metricProof.metrics = _.pick(rawMetric.metrics, ['watts_consumed', 'watts_produced', 'timestamp'])
+  metricProof.metrics = _.pick(rawMetric.metrics, ['timestamp', 'watts_consumed', 'watts_produced'])
   
   return metricProof;
 }
@@ -15,10 +15,10 @@ const checkMetric = async (req, res, next) => {
   const metricProof = getMetricProof(req.body);
   let multihashResult = [];
   if (!ipfs.util.isIPFS.multihash(metricProof.ipfs_hash)) {
-    const invalidHash = new APIError("IPFS hash not valid", "400", true);
+    const invalidHash = new APIError('IPFS hash not valid', 400, true);
     return next(invalidHash);
   }
-  const metricsBuffer = Buffer.from(JSON.stringify(metricProof.metrics))
+  const metricsBuffer = Buffer.from(JSON.stringify(metricProof.metrics), 'ascii')
   try {
     multihashResult = await ipfs.add(metricsBuffer, { onlyHash: true });
   } catch(_error) {
@@ -55,7 +55,69 @@ const backupMetric = async (req, res, next) => {
   res.send({status: "ok", message: 'backup-saved'})
 }
 
+const getMetricHistory = async (req, res, next) => {
+  const hwId = req.param.hardware_id;
+  try {
+    const raw_metrics = await MetricProof.find({hardware_id: hwId}).sort({createdAt: 'desc'});
+    const metrics = raw_metrics(raw => _.omit(getMetricProof(raw), 'hardware_id'));
+    console.log('hw_metrics', metrics);
+    return res.send({
+      hardware_id: hwId,
+      metrics
+    })
+  } catch(rawError) {
+    console.error(rawError);
+    const dbError = new APIError('Error while retrieving data from DB.')
+    return next(dbError);
+  }
+}
+
+const getCurrentMetrics = async (req, res, next) => {
+  const hwId = req.param.hardware_id;
+  try {
+    const aggregation = [
+      {
+        $match: {
+          hardware_id: hwId
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          hardware_id: {
+            $first: '$hardware_id'
+          },
+          watts_produced: {
+            $sum: "$metrics.watts_produced"
+          },
+          watts_consumed: {
+            $sum: '$metrics.watts_consumed'
+          }
+        }
+      }, {
+        $project: {
+          hardware_id: 1,
+          watts_consumed: 1,
+          watts_produced: 1,
+          watts_surplus: {
+            $substract: ['$watts_consumed', '$watts_produced']
+          }
+        }
+      }
+    ]
+    const total_metrics = await MetricProof.aggregate(aggregation);
+    console.log('hw_metrics', total_metrics);
+    return res.send(total_metrics);
+  } catch(rawError) {
+    console.error(rawError);
+    const dbError = new APIError('Error while retrieving data from DB.')
+    return next(dbError);
+  }
+}
+
 export {
   checkMetric,
-  backupMetric
+  backupMetric,
+  getMetricHistory,
+  getCurrentMetrics,
 }

@@ -37,5 +37,10 @@ module.exports = {
         timestamp: Joi.number().required()
       })
     }
+  },
+  hardware: {
+    body: {
+      hardware_id: Joi.string().required()
+    }
   }
 };

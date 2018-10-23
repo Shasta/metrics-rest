@@ -29,9 +29,9 @@ describe('## Metric Proof APIs', () => {
     hardware_id: "1234",
     ipfs_hash: "QmRHa2xtveGem4xqPDVnN2mZRxaBqurCc6Z8nmjvNpo5ZG",
     metrics: {
+      timestamp: 1540195373,
       watts_consumed: 1000,
-      watts_produced: 230,
-      timestamp: 1540195373
+      watts_produced: 230
     }
   };
 
@@ -39,9 +39,9 @@ describe('## Metric Proof APIs', () => {
     hardware_id: "1234",
     ipfs_hash: "invalid_hash",
     metrics: {
+      timestamp: 1540195373,
       watts_consumed: 1000,
-      watts_produced: 230,
-      timestamp: 1540195373
+      watts_produced: 230
     }
   };
 
