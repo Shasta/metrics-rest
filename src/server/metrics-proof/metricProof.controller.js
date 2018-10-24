@@ -71,7 +71,7 @@ const getMetricHistory = async (req, res, next) => {
 const getCurrentMetrics = async (req, res, next) => {
   const hwId = req.query.hardware_id;
   try {
-    const latestRawMetric = await MetricProof.find().sort({'metrics.timestamp': -1}).limit(1);
+    const latestRawMetric = await MetricProof.find({hardware_id: hwId}).sort({'metrics.timestamp': -1}).limit(1);
 
     if (!latestRawMetric.length) {
       return res.send({
