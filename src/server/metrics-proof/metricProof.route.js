@@ -13,14 +13,14 @@ router.route('/save-proof')
     backupMetric
   );
 
-  router.route('/getConsumption')
+  router.route('/history')
   /** GET /api/metrics/getConsumption - Retrieve historic conumption of a hardware */
   .get(
     validate(paramValidation.getHistoric),
     getMetricHistory
   );
 
-  router.route('/getCurrentMetrics')
+  router.route('/current')
   /** GET /api/metrics/getConsumption - Retrieve historic conumption of a hardware */
   .get(
     validate(paramValidation.getHistoric),

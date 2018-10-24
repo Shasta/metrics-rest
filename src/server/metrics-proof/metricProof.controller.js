@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { ipfs } from '../../config/ipfs';
+import ipfsHashFromString from '../../utils/ipfs_hash';
 import APIError from '../helpers/APIError';
 // Model
 import MetricProof from './metricProof.model';
@@ -13,25 +14,21 @@ const getMetricProof = rawMetric => {
 
 const checkMetric = async (req, res, next) => {
   const metricProof = getMetricProof(req.body);
-  let multihashResult = [];
+  let metricsChecksum = '';
   if (!ipfs.util.isIPFS.multihash(metricProof.ipfs_hash)) {
     const invalidHash = new APIError('IPFS hash not valid', 400, true);
     return next(invalidHash);
   }
-  const metricsBuffer = Buffer.from(JSON.stringify(metricProof.metrics), 'ascii')
   try {
-    multihashResult = await ipfs.add(metricsBuffer, { onlyHash: true });
+    metricsChecksum = await ipfsHashFromString(JSON.stringify(metricProof.metrics));
   } catch(_error) {
+    console.error('error', _error)
     const hashingError = new APIError('Error while multihash', 400, false);
-    throw hashingError;
+    return next(hashingError)
   }
 
-  if (multihashResult.length !== 1 || !(_.has(multihashResult[0], 'hash'))) {
-    const invalidResult = new APIError('Multihash result error', 400, false);
-    throw invalidResult;
-  }
-  const metricsChecksum = _.get(multihashResult[0], 'hash', '');
-  if (!metricsChecksum || metricsChecksum !== metricProof.ipfs_hash) {
+  console.log('compare hashes', metricProof.ipfs_hash, metricsChecksum)
+  if (!metricsChecksum.length ||  metricsChecksum !== metricProof.ipfs_hash) {
     const invalidChecksum = new APIError("The metrics body does not match with multihash checksum", "400", true)
     return next(invalidChecksum)
   }
@@ -63,7 +60,7 @@ const getMetricHistory = async (req, res, next) => {
     return res.send({
       hardware_id: hwId,
       metrics
-    })
+    });
   } catch(rawError) {
     console.error(rawError);
     const dbError = new APIError('Error while retrieving data from DB.')
@@ -74,6 +71,42 @@ const getMetricHistory = async (req, res, next) => {
 const getCurrentMetrics = async (req, res, next) => {
   const hwId = req.query.hardware_id;
   try {
+    const latestRawMetric = await MetricProof.find().sort({'metrics.timestamp': -1}).limit(1);
+
+    if (!latestRawMetric.length) {
+      return res.send({
+        hardware_id: hwId,
+        ipfs_hash: '',
+        metrics: {
+          timestamp: 0,
+          watts_consumed: 0,
+          watts_produced: 0,
+          watts_surplus: 0
+        }
+      })      
+    }
+
+    // Clean mongo fields
+    const latestMetric = getMetricProof(latestRawMetric[0]);
+    // Append watts_surplus
+    const watts_surplus = latestMetric.metrics.watts_produced - latestMetric.metrics.watts_consumed
+    latestMetric.metrics.watts_surplus = watts_surplus <= 0 ? 0 : watts_surplus;
+    return res.send(latestMetric);
+  } catch(rawError) {
+    console.error(rawError);
+    const dbError = new APIError('Error while retrieving data from DB.')
+    return next(dbError);
+  }
+}
+
+export {
+  checkMetric,
+  backupMetric,
+  getMetricHistory,
+  getCurrentMetrics,
+}
+
+/** Saving query if needed in future
     const aggregation = [
       {
         $match: {
@@ -99,24 +132,14 @@ const getCurrentMetrics = async (req, res, next) => {
           watts_consumed: 1,
           watts_produced: 1,
           watts_surplus: {
-            $substract: ['$watts_consumed', '$watts_produced']
+            $subtract: ['$watts_consumed', '$watts_produced']
           }
         }
       }
     ]
-    const total_metrics = await MetricProof.aggregate(aggregation);
-    console.log('hw_metrics', total_metrics);
-    return res.send(total_metrics);
-  } catch(rawError) {
-    console.error(rawError);
-    const dbError = new APIError('Error while retrieving data from DB.')
-    return next(dbError);
-  }
-}
-
-export {
-  checkMetric,
-  backupMetric,
-  getMetricHistory,
-  getCurrentMetrics,
-}
+    const result = await MetricProof.aggregate(aggregation)
+      .allowDiskUse(true)
+      .cursor({})
+      .exec()
+      .toArray();
+    */
