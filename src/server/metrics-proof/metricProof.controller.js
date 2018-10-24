@@ -56,11 +56,10 @@ const backupMetric = async (req, res, next) => {
 }
 
 const getMetricHistory = async (req, res, next) => {
-  const hwId = req.param.hardware_id;
+  const hwId = req.query.hardware_id;
   try {
     const raw_metrics = await MetricProof.find({hardware_id: hwId}).sort({createdAt: 'desc'});
-    const metrics = raw_metrics(raw => _.omit(getMetricProof(raw), 'hardware_id'));
-    console.log('hw_metrics', metrics);
+    const metrics = raw_metrics.map(raw => _.omit(getMetricProof(raw), 'hardware_id'));
     return res.send({
       hardware_id: hwId,
       metrics
@@ -73,7 +72,7 @@ const getMetricHistory = async (req, res, next) => {
 }
 
 const getCurrentMetrics = async (req, res, next) => {
-  const hwId = req.param.hardware_id;
+  const hwId = req.query.hardware_id;
   try {
     const aggregation = [
       {

@@ -38,6 +38,11 @@ module.exports = {
       })
     }
   },
+  getHistoric: {
+    query: {
+      hardware_id: Joi.string().required()
+    }
+  },
   hardware: {
     body: {
       hardware_id: Joi.string().required()

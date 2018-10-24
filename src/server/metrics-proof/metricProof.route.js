@@ -1,7 +1,7 @@
 import express from 'express';
 import validate from 'express-validation';
 import paramValidation from '../../config/param-validation';
-import { checkMetric, backupMetric } from './metricProof.controller';
+import { checkMetric, backupMetric, getMetricHistory, getCurrentMetrics } from './metricProof.controller';
 
 const router = express.Router(); // eslint-disable-line new-cap
 
@@ -13,4 +13,17 @@ router.route('/save-proof')
     backupMetric
   );
 
+  router.route('/getConsumption')
+  /** GET /api/metrics/getConsumption - Retrieve historic conumption of a hardware */
+  .get(
+    validate(paramValidation.getHistoric),
+    getMetricHistory
+  );
+
+  router.route('/getCurrentMetrics')
+  /** GET /api/metrics/getConsumption - Retrieve historic conumption of a hardware */
+  .get(
+    validate(paramValidation.getHistoric),
+    getCurrentMetrics
+  );
 module.exports = router;

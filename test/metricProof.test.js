@@ -19,7 +19,7 @@ after((done) => {
 });
 
 before(function (done) {
-  setTimeout(function(){
+  setTimeout(function () {
     done();
   }, 500);
 });
@@ -44,9 +44,10 @@ describe('## Metric Proof APIs', () => {
       watts_produced: 230
     }
   };
+  const hardwareId = '_e7bv9pm5byo';
 
-  describe('# POST /api/metrics/save-proof', () => {
-    it('should receive a valid metrics and save it to mongodb', () => 
+  describe.skip('# POST /api/metrics/save-proof', () => {
+    it('should receive a valid metrics and save it to mongodb', () =>
       request(app)
         .post('/api/metrics/save-proof')
         .send(hw_metrics)
@@ -55,13 +56,37 @@ describe('## Metric Proof APIs', () => {
           expect(res.body.status).to.equal("ok");
         })
     );
-    it('should receive an invalid ipfs hash and output an error', () => 
+    it('should receive an invalid ipfs hash and output an error', () =>
       request(app)
         .post('/api/metrics/save-proof')
         .send(invalid_hash_metrics)
         .expect(httpStatus.BAD_REQUEST)
         .then((res) => {
           expect(res.body.message).to.equal('IPFS hash not valid');
+        })
+    );
+  });
+
+  describe('# GET /api/metrics/getConsumption', () => {
+    it('should receive an array with the historic consumption', () =>
+      request(app)
+        .get('/api/metrics/getConsumption')
+        .query({ hardware_id: hardwareId })
+        .expect(httpStatus.OK)
+        .then((res) => {
+          expect(res.length > 0);
+        })
+    );
+  });
+
+  describe('# GET /api/metrics/getConsumption', () => {
+    it('should receive an array with the historic consumption', () =>
+      request(app)
+        .get('/api/metrics/getCurrentMetrics')
+        .query({ hardware_id: hardwareId })
+        .expect(httpStatus.OK)
+        .then((res) => {
+         // console.log(res);
         })
     );
   });

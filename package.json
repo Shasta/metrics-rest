@@ -18,6 +18,7 @@
     "lint:watch": "npm run lint -- --watch",
     "precommit": "npm run lint && yarn test",
     "test": "cross-env NODE_ENV=test DEBUG=metrics-rest:* ./node_modules/.bin/mocha --require @babel/polyfill --compilers js:@babel/register --ui bdd --reporter spec --colors test --recursive",
+    "test:metrics": "cross-env NODE_ENV=test DEBUG=metrics-rest:* ./node_modules/.bin/mocha --require @babel/polyfill --compilers js:@babel/register --ui bdd --reporter spec --colors test/metricProof.test.js ",
     "test:watch": "npm run test -- --watch",
     "test:coverage": "cross-env NODE_ENV=test ./node_modules/.bin/istanbul cover _mocha -- --ui bdd --reporter spec --colors server --recursive",
     "test:check-coverage": "npm run test:coverage && istanbul check-coverage",
