@@ -87,10 +87,10 @@ describe('## Metric Proof APIs', () => {
     );
   });
 
-  describe('# GET /api/metrics/history', () => {
+  describe('# GET /api/metrics/counter-history', () => {
     it('should receive a valid response with the historic consumption', () =>
       request(app)
-        .get('/api/metrics/history')
+        .get('/api/metrics/counter-history')
         .query({ hardware_id: hardwareId })
         .expect(httpStatus.OK)
         .then((res) => {
@@ -105,7 +105,7 @@ describe('## Metric Proof APIs', () => {
     );
   });
 
-  describe('# GET /api/metrics/current', function() {
+  describe('# GET /api/metrics/counter', function() {
     this.timeout(5000);
 
     const mockup_metrics = hw_metrics[1];
@@ -118,7 +118,7 @@ describe('## Metric Proof APIs', () => {
         .expect(httpStatus.OK)
       // Retrieve current metrics
       await request(app)
-        .get('/api/metrics/current')
+        .get('/api/metrics/counter')
         .query({ hardware_id: hardwareId })
         .expect(httpStatus.OK)
         .then(async (res) => {
@@ -145,14 +145,13 @@ describe('## Metric Proof APIs', () => {
   });
 
   describe('# GET /api/metrics/by-unit-time', function() {
-    this.timeout(5000);
-
-    const hw_id_time = 5555;
+    const hw_id = '5555';
+    const currentMonthBatch = dailyMetricsBatch(hw_id)
 
     it('should receive a valid response with the current consumption', async () => {
       // Add batch of metrics from hardware id 5555
       await Promise.map(
-        dailyMetricsBatch,
+        currentMonthBatch,
         fakeMetric =>
           request(app)
             .post('/api/metrics/save-proof')
@@ -163,13 +162,41 @@ describe('## Metric Proof APIs', () => {
       await request(app)
         .get('/api/metrics/by-unit-time')
         .query({
-          hardware_id: hw_id_time,
+          hardware_id: hw_id,
           by: 'day'
         })
         .expect(httpStatus.OK)
         .then(async (res) => {
           console.log('RESULT BY DAILY', JSON.stringify(res.body))
           console.log('TODO: Make fake data with relative to current date, to be consistent and be able to check values without breaking every 14 days')
+        })
+    });
+  });
+
+  describe('# GET /api/metrics/current-month', function() {
+    const hw_id = '6666';
+    const currentMonthBatch = dailyMetricsBatch(hw_id)
+
+    it('should receive a valid response with the current consumption', async () => {
+      // Add batch of metrics from hardware id 6666
+      await Promise.map(
+        currentMonthBatch,
+        fakeMetric =>
+          request(app)
+            .post('/api/metrics/save-proof')
+            .send(fakeMetric)
+            .expect(httpStatus.OK)
+      )
+      // Retrieve history of metrics by day
+      await request(app)
+        .get('/api/metrics/current-month')
+        .query({
+          hardware_id: hw_id,
+        })
+        .expect(httpStatus.OK)
+        .then(async (res) => {
+          console.log('RESULT BY DAILY', JSON.stringify(res.body))
+          console.log('TODO: Make fake data with relative to current date, to be consistent and be able to check values without breaking test after one month')
         })
     });
   });

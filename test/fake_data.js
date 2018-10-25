@@ -1,5 +1,5 @@
-const dailyMetricsBatch = [{
-  "hardware_id": "5555",
+const dailyMetricsBatch = id => [{
+  "hardware_id": id,
   "ipfs_hash": "QmWnMx8qLqxRMyos38posjqu742aavKMuqP2FrYcvroKu4",
   "metrics": {
     "timestamp": 1540391779,
@@ -8,7 +8,7 @@ const dailyMetricsBatch = [{
   }
 },
 {
-  "hardware_id": "5555",
+  "hardware_id": id,
   "ipfs_hash": "QmXHMF29xN56opVQWR1sMSFuv7S96QxYFeNgBrT6y8fGUL",
   "metrics": {
     "timestamp": 1540393200,
@@ -17,7 +17,7 @@ const dailyMetricsBatch = [{
   }
 },
 {
-  "hardware_id": "5555",
+  "hardware_id": id,
   "ipfs_hash": "QmdB5hBnXuKitCNzGD7jWSFp9vbTHsJeGWyf6bPtitfYso",
   "metrics": {
     "timestamp": 1540429200,
@@ -26,7 +26,7 @@ const dailyMetricsBatch = [{
   }
 },
 {
-  "hardware_id": "5555",
+  "hardware_id": id,
   "ipfs_hash": "QmefJr69iGo6FCv6m1YaK944oEVxNkiw3ZfeiT7aY4wYqr",
   "metrics": {
     "timestamp": 1540512060,
@@ -35,7 +35,7 @@ const dailyMetricsBatch = [{
   }
 },
 {
-  "hardware_id": "5555",
+  "hardware_id": id,
   "ipfs_hash": "QmX6UuvQoj9CS1ujPzD24ib5C8J374aYrymyU9fQXpnWSg",
   "metrics": {
     "timestamp": 1540634400,

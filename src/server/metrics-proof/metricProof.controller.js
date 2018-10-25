@@ -29,21 +29,21 @@ const getDefaultSince = byDate => {
   switch(byDate) {
     case 'day':
       // Last 14 days
-      return moment().subtract(14, 'days');
+      return moment().subtract(15, 'days').startOf('day');
     case 'month':
       // Last 3 months
-      return moment().subtract(3, 'months');
+      return moment().subtract(3, 'months').startOf('month');
     case 'week':
       // Last 4 weeks 
-      return moment().subtract(4, 'weeks');
+      return moment().subtract(5, 'weeks').startOf('weekIso');
     case 'year':
       // Last 2 years
-      return moment().subtract(2, 'years');
+      return moment().subtract(3, 'years').startOf('year');
     case 'quarter':
       // Last 4 quarters
-      return moment().subtract(4, 'quarter');
+      return moment().subtract(5, 'quarter').startOf('quarter');
     default:
-      return moment().subtract(14, 'days');
+      return moment().subtract(14, 'days').startOf('day');
   }
 };
 
@@ -121,23 +121,103 @@ const getMetricHistoryBy = async (req, res, next) => {
   */
 
   const byMomentIso = getMomentIso(by);
-  const since = getDefaultSince();
+  const from = getDefaultSince(by);
+  const to = moment().endOf(byMomentIso).unix();
+
+  console.log(from.unix())
+  console.log(to)
   try {
     const raw_metrics = await MetricProof
       .find({
         hardware_id: hwId,
-        'metrics.timestamp': { $gte: since.unix() }
+        'metrics.timestamp': {
+          $gte: from.unix(),
+          $lte: to
+        }
       })
       .sort({'metrics.timestamp': 'asc'})
-      .limit(100);
+      .limit(2000);
 
     const counterData = raw_metrics.map(raw => _.omit(getMetricProof(raw), 'hardware_id'));
     const metricsPerTimeUnit = getCounterMetricsByTimeUnit(counterData, byMomentIso);
-
+    
     return res.send({
       hardware_id: hwId,
       unit_of_time: by,
-      history_by_unit: metricsPerTimeUnit.data,
+      history_by_unit: metricsPerTimeUnit,
+    });
+  } catch(rawError) {
+    console.error(rawError);
+    const dbError = new APIError('Error while retrieving data from DB.')
+    return next(dbError);
+  }
+}
+
+const getCurrentMonth = async (req, res, next) => {
+  const hwId = req.query.hardware_id;
+
+  const currentMonth = moment().startOf('month').unix();
+
+  try {
+    const latestThisMonth = await MetricProof.find({
+      hardware_id: hwId,
+      'metrics.timestamp': {
+        $gte: currentMonth
+      }
+    })
+    .sort({'metrics.timestamp': 'desc'})
+    .limit(1);
+
+    const latestPriorMonth = await MetricProof.find({
+        hardware_id: hwId,
+        'metrics.timestamp': {
+          $lt: currentMonth
+        }
+      })
+      .sort({'metrics.timestamp': 'desc'})
+      .limit(1);
+
+    // Calculate the difference between the first and latest day in this month
+    if (!!latestPriorMonth.length && !!latestThisMonth.length) {
+      const firstMetrics = latestPriorMonth[0].metrics;
+      const latestMetrics = latestThisMonth[0].metrics;
+
+      const monthConsumption = latestMetrics.watts_consumed - firstMetrics.watts_consumed;
+      const monthProduction = latestMetrics.watts_produced - firstMetrics.watts_produced;
+      let monthSurplus = monthProduction - monthConsumption;
+      monthSurplus = monthSurplus <= 0 ? 0 : monthSurplus;
+
+      return res.send({
+        hardware_id: hwId,
+        metrics: {
+          watts_consumed: monthConsumption,
+          watts_produced: monthProduction,
+          watts_surplus: monthSurplus,
+        }
+      });
+    }
+    // If there is no records in the prior month, this is the first month. Show data from latest record.
+    if (!latestPriorMonth.length && !!latestThisMonth.length) {
+      const firstMonth = latestThisMonth[0].metrics;
+      const firstMonthSurplus = firstMonth.watts_produced - firstMonth.watts_consumed;
+
+      return res.send({
+        hardware_id: hwId,
+        metrics: {
+          watts_consumed: firstMonth.watts_consumed,
+          watts_produced: firstMonth.watts_produced,
+          watts_surplus: firstMonthSurplus
+        }
+      });
+    }
+    // No documents found regarding this hardware id
+    return res.send({
+      hardware_id: hwId,
+      metrics: {
+        watts_consumed: 0,
+        watts_produced: 0,
+        watts_surplus: 0,
+      }
     });
   } catch(rawError) {
     console.error(rawError);
@@ -183,42 +263,5 @@ export {
   getRawMetricHistory,
   getCurrentRawMetrics,
   getMetricHistoryBy,
+  getCurrentMonth
 }
-
-/** Saving query if needed in future
-    const aggregation = [
-      {
-        $match: {
-          hardware_id: hwId
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          hardware_id: {
-            $first: '$hardware_id'
-          },
-          watts_produced: {
-            $sum: "$metrics.watts_produced"
-          },
-          watts_consumed: {
-            $sum: '$metrics.watts_consumed'
-          }
-        }
-      }, {
-        $project: {
-          hardware_id: 1,
-          watts_consumed: 1,
-          watts_produced: 1,
-          watts_surplus: {
-            $subtract: ['$watts_consumed', '$watts_produced']
-          }
-        }
-      }
-    ]
-    const result = await MetricProof.aggregate(aggregation)
-      .allowDiskUse(true)
-      .cursor({})
-      .exec()
-      .toArray();
-    */
