@@ -32,7 +32,7 @@ const getDefaultSince = byDate => {
       return moment().subtract(15, 'days').startOf('day');
     case 'month':
       // Last 3 months
-      return moment().subtract(3, 'months').startOf('month');
+      return moment().subtract(6, 'months').startOf('month');
     case 'week':
       // Last 4 weeks 
       return moment().subtract(5, 'weeks').startOf('weekIso');
