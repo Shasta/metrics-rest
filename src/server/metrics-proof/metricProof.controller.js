@@ -1,9 +1,51 @@
 import _ from 'lodash';
+import moment from 'moment';
 import { ipfs } from '../../config/ipfs';
 import ipfsHashFromString from '../../utils/ipfs_hash';
+import { getCounterMetricsByTimeUnit } from '../../utils/counter_utils';
 import APIError from '../helpers/APIError';
+
 // Model
 import MetricProof from './metricProof.model';
+
+const getMomentIso = byDate => {
+  switch(byDate) {
+    case 'day': 
+      return 'day';
+    case 'month':
+      return 'month';
+    case 'week': 
+      return 'weekIso';
+    case 'year':
+      return 'year';
+    case 'quarter':
+      return 'quarter';
+    default:
+      return 'month';
+  }
+}
+
+const getDefaultSince = byDate => {
+  switch(byDate) {
+    case 'day':
+      // Last 14 days
+      return moment().subtract(14, 'days');
+    case 'month':
+      // Last 3 months
+      return moment().subtract(3, 'months');
+    case 'week':
+      // Last 4 weeks 
+      return moment().subtract(4, 'weeks');
+    case 'year':
+      // Last 2 years
+      return moment().subtract(2, 'years');
+    case 'quarter':
+      // Last 4 quarters
+      return moment().subtract(4, 'quarter');
+    default:
+      return moment().subtract(14, 'days');
+  }
+};
 
 const getMetricProof = rawMetric => {
   const metricProof = _.pick(rawMetric, ['hardware_id', 'ipfs_hash'])
@@ -52,10 +94,10 @@ const backupMetric = async (req, res, next) => {
   res.send({status: "ok", message: 'backup-saved'})
 }
 
-const getMetricHistory = async (req, res, next) => {
+const getRawMetricHistory = async (req, res, next) => {
   const hwId = req.query.hardware_id;
   try {
-    const raw_metrics = await MetricProof.find({hardware_id: hwId}).sort({createdAt: 'desc'});
+    const raw_metrics = await MetricProof.find({ hardware_id: hwId }).sort({'metrics.timestamp': 'desc'});
     const metrics = raw_metrics.map(raw => _.omit(getMetricProof(raw), 'hardware_id'));
     return res.send({
       hardware_id: hwId,
@@ -68,10 +110,46 @@ const getMetricHistory = async (req, res, next) => {
   }
 }
 
-const getCurrentMetrics = async (req, res, next) => {
+const getMetricHistoryBy = async (req, res, next) => {
+  const hwId = req.query.hardware_id;
+  const by = req.query.by;
+
+  /*
+    Not available for now. Only default values are show for now
+    const from = req.query.from;
+    const to = req.query.to;
+  */
+
+  const byMomentIso = getMomentIso(by);
+  const since = getDefaultSince();
+  try {
+    const raw_metrics = await MetricProof
+      .find({
+        hardware_id: hwId,
+        'metrics.timestamp': { $gte: since.unix() }
+      })
+      .sort({'metrics.timestamp': 'asc'})
+      .limit(100);
+
+    const counterData = raw_metrics.map(raw => _.omit(getMetricProof(raw), 'hardware_id'));
+    const metricsPerTimeUnit = getCounterMetricsByTimeUnit(counterData, byMomentIso);
+
+    return res.send({
+      hardware_id: hwId,
+      unit_of_time: by,
+      history_by_unit: metricsPerTimeUnit.data,
+    });
+  } catch(rawError) {
+    console.error(rawError);
+    const dbError = new APIError('Error while retrieving data from DB.')
+    return next(dbError);
+  }
+}
+
+const getCurrentRawMetrics = async (req, res, next) => {
   const hwId = req.query.hardware_id;
   try {
-    const latestRawMetric = await MetricProof.find({hardware_id: hwId}).sort({'metrics.timestamp': -1}).limit(1);
+    const latestRawMetric = await MetricProof.find({hardware_id: hwId}).sort({'metrics.timestamp': 'desc'}).limit(1);
 
     if (!latestRawMetric.length) {
       return res.send({
@@ -102,8 +180,9 @@ const getCurrentMetrics = async (req, res, next) => {
 export {
   checkMetric,
   backupMetric,
-  getMetricHistory,
-  getCurrentMetrics,
+  getRawMetricHistory,
+  getCurrentRawMetrics,
+  getMetricHistoryBy,
 }
 
 /** Saving query if needed in future

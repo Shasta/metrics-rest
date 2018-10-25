@@ -6,8 +6,10 @@ const expect = chai.expect;
 const should = chai.should();
 const app = require('../src/index');
 
+
 import _ from 'lodash';
-import { beforeCaseTests } from "./test.config";
+import { beforeCaseTests } from './test.config';
+import { dailyMetricsBatch } from './fake_data.js';
 
 chai.config.includeStack = true;
 
@@ -71,6 +73,7 @@ describe('## Metric Proof APIs', () => {
         .expect(httpStatus.OK)
         .then(async (res) => {
           expect(res.body.status).to.equal("ok");
+          // Test if in DB is inserted.
         })
     );
     it('should receive an invalid ipfs hash and output an error', () =>
@@ -137,6 +140,36 @@ describe('## Metric Proof APIs', () => {
           // Second metric surplus is 300
           const manual_surplus = mockup_metrics.metrics.watts_produced - mockup_metrics.metrics.watts_consumed
           surplus.should.be.equal(manual_surplus);
+        })
+    });
+  });
+
+  describe('# GET /api/metrics/by-unit-time', function() {
+    this.timeout(5000);
+
+    const hw_id_time = 5555;
+
+    it('should receive a valid response with the current consumption', async () => {
+      // Add batch of metrics from hardware id 5555
+      await Promise.map(
+        dailyMetricsBatch,
+        fakeMetric =>
+          request(app)
+            .post('/api/metrics/save-proof')
+            .send(fakeMetric)
+            .expect(httpStatus.OK)
+      )
+      // Retrieve history of metrics by day
+      await request(app)
+        .get('/api/metrics/by-unit-time')
+        .query({
+          hardware_id: hw_id_time,
+          by: 'day'
+        })
+        .expect(httpStatus.OK)
+        .then(async (res) => {
+          console.log('RESULT BY DAILY', JSON.stringify(res.body))
+          console.log('TODO: Make fake data with relative to current date, to be consistent and be able to check values without breaking every 14 days')
         })
     });
   });

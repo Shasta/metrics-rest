@@ -43,6 +43,14 @@ module.exports = {
       hardware_id: Joi.string().required()
     }
   },
+  getHistoricByUnit: {
+    query: {
+      hardware_id: Joi.string().required(),
+      by: Joi.string().required(),
+      from: Joi.string(),
+      to: Joi.string()
+    }
+  },
   hardware: {
     body: {
       hardware_id: Joi.string().required()
