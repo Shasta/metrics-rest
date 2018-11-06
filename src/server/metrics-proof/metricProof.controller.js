@@ -49,7 +49,7 @@ const getDefaultSince = byDate => {
 
 const getMetricProof = rawMetric => {
   const metricProof = _.pick(rawMetric, ['hardware_id', 'ipfs_hash'])
-  metricProof.metrics = _.pick(rawMetric.metrics, ['timestamp', 'watts_consumed', 'watts_produced'])
+  metricProof.metrics = _.pick(rawMetric.metrics, ['hardware_id', 'timestamp', 'watts_consumed', 'watts_produced'])
   
   return metricProof;
 }
@@ -69,7 +69,7 @@ const checkMetric = async (req, res, next) => {
     return next(hashingError)
   }
 
-  console.log('compare hashes', metricProof.ipfs_hash, metricsChecksum)
+  // console.log('Compare hashes', metricProof.ipfs_hash, metricsChecksum)
   if (!metricsChecksum.length ||  metricsChecksum !== metricProof.ipfs_hash) {
     const invalidChecksum = new APIError("The metrics body does not match with multihash checksum", "400", true)
     return next(invalidChecksum)
@@ -124,8 +124,8 @@ const getMetricHistoryBy = async (req, res, next) => {
   const from = getDefaultSince(by);
   const to = moment().endOf(byMomentIso).unix();
 
-  console.log(from.unix())
-  console.log(to)
+  console.log(from, from.unix())
+  console.log(moment.unix(to), to)
   try {
     const raw_metrics = await MetricProof
       .find({

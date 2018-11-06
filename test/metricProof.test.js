@@ -35,8 +35,9 @@ describe('## Metric Proof APIs', () => {
   const hw_metrics = [
     {
       hardware_id: "1234",
-      ipfs_hash: "Qmap9tTG8oXzpUBbTL1iG9pRV8JmSzXVVDe591Fx7pfRmy",
+      ipfs_hash: "QmSXztKhxZfNFynFWAjfyWQx1ATaUjhVru4dZv1pviUZXC",
       metrics: {
+        hardware_id: "1234",
         timestamp: 1540195373,
         watts_consumed: 1000,
         watts_produced: 230
@@ -44,8 +45,9 @@ describe('## Metric Proof APIs', () => {
     },
     {
       hardware_id: "1234",
-      ipfs_hash: "QmZ4GfGzvn6UB1isev1AsuYpnzKrsePqmwQkE5eL2pJxMr",
+      ipfs_hash: "QmNgaaowntBZdWd5VuvbUUWdHhHJE84kkCx4QcGMTHWJzv",
       metrics: {
+        hardware_id: "1234",
         timestamp: 1540195378,
         watts_consumed: 1100,
         watts_produced: 1400
@@ -57,6 +59,7 @@ describe('## Metric Proof APIs', () => {
     hardware_id: "1234",
     ipfs_hash: "invalid_hash",
     metrics: {
+      hardware_id: "1234",
       timestamp: 1540195373,
       watts_consumed: 1000,
       watts_produced: 230
@@ -125,8 +128,6 @@ describe('## Metric Proof APIs', () => {
           const body = res.body;
           const metrics = _.get(body, 'metrics', {});
 
-          console.log("metrics", JSON.stringify(body, null, 2));
-          console.log("mockup", JSON.stringify(mockup_metrics, null, 2))
           // Check fields
           body.should.contain.keys('hardware_id', 'ipfs_hash', 'metrics');
           metrics.should.contain.keys('watts_consumed', 'watts_produced', 'watts_surplus');
@@ -144,10 +145,10 @@ describe('## Metric Proof APIs', () => {
     });
   });
 
-  describe('# GET /api/metrics/by-unit-time', function() {
+  describe('# GET /api/metrics/by-unit-time', async function() {
     const hw_id = '5555';
-    const currentMonthBatch = dailyMetricsBatch(hw_id)
-
+    const currentMonthBatch = await Promise.all(dailyMetricsBatch(hw_id))
+    console.log('batch', currentMonthBatch);
     it('should receive a valid response with the current consumption', async () => {
       // Add batch of metrics from hardware id 5555
       await Promise.map(
@@ -173,9 +174,9 @@ describe('## Metric Proof APIs', () => {
     });
   });
 
-  describe('# GET /api/metrics/current-month', function() {
+  describe('# GET /api/metrics/current-month', async function() {
     const hw_id = '6666';
-    const currentMonthBatch = dailyMetricsBatch(hw_id)
+    const currentMonthBatch = await Promise.all(dailyMetricsBatch(hw_id))
 
     it('should receive a valid response with the current consumption', async () => {
       // Add batch of metrics from hardware id 6666

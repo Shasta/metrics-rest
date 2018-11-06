@@ -32,6 +32,7 @@ module.exports = {
       hardware_id: Joi.string().required(),
       ipfs_hash: Joi.string().required(),
       metrics: Joi.object().keys({
+        hardware_id: Joi.string().required(),
         watts_consumed: Joi.number().required(),
         watts_produced: Joi.number().required(),
         timestamp: Joi.number().required()
