@@ -1,6 +1,6 @@
 {
   "name": "metrics-rest",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "REST api for saving hw metrics into MongoDB",
   "main": "index.js",
   "private": false,

@@ -29,21 +29,39 @@ const getDefaultSince = byDate => {
   switch(byDate) {
     case 'day':
       // Last 14 days
-      return moment().subtract(15, 'days').startOf('day');
+      return ({
+        from: moment().subtract(15, 'days').startOf('day'),
+        maxUnit: 14
+      });
     case 'month':
-      // Last 3 months
-      return moment().subtract(6, 'months').startOf('month');
+      // Last 6 months
+      return ({
+        from: moment().subtract(6, 'months').startOf('month'),
+        maxUnit: 6
+      });
     case 'week':
       // Last 4 weeks 
-      return moment().subtract(5, 'weeks').startOf('weekIso');
+      return ({
+        from: moment().subtract(5, 'weeks').startOf('weekIso'),
+        maxUnit: 4
+      });
     case 'year':
       // Last 2 years
-      return moment().subtract(3, 'years').startOf('year');
+      return ({
+        from: moment().subtract(3, 'years').startOf('year'),
+        maxUnit: 2
+      });
     case 'quarter':
       // Last 4 quarters
-      return moment().subtract(5, 'quarter').startOf('quarter');
+      return ({
+        from: moment().subtract(5, 'quarter').startOf('quarter'),
+        maxUnit: 4,
+      });
     default:
-      return moment().subtract(14, 'days').startOf('day');
+      return ({
+        from: moment().subtract(15, 'days').startOf('day'),
+        maxUnit: 14
+      });
   }
 };
 
@@ -113,19 +131,21 @@ const getRawMetricHistory = async (req, res, next) => {
 const getMetricHistoryBy = async (req, res, next) => {
   const hwId = req.query.hardware_id;
   const by = req.query.by;
+  let noPriorData = false;
 
   /*
     Not available for now. Only default values are show for now
-    const from = req.query.from;
     const to = req.query.to;
+    const from = req.query.from;
   */
 
   const byMomentIso = getMomentIso(by);
-  const from = getDefaultSince(by);
+  const { from, maxUnit } = getDefaultSince(by);
   const to = moment().endOf(byMomentIso).unix();
 
   console.log(from, from.unix())
   console.log(moment.unix(to), to)
+  console.log(hwId)
   try {
     const raw_metrics = await MetricProof
       .find({
@@ -135,11 +155,33 @@ const getMetricHistoryBy = async (req, res, next) => {
           $lte: to
         }
       })
-      .sort({'metrics.timestamp': 'asc'})
+      .sort({'metrics.timestamp': 1})
       .limit(2000);
-
+    if (raw_metrics.length > 0) {
+      // Grab the prior document before the first document of the first query, to be able to calculate the difference in the first month
+      const priorFirst = await MetricProof.find({
+        hardware_id: hwId,
+        'metrics.timestamp': {
+          $lt: raw_metrics[0].metrics.timestamp
+        }
+      })
+      .sort({'metrics.timestamp': -1})
+      .limit(1);
+      /**
+      * If there is prior document, now we can make the difference between the first element in first query and the prior document,
+      * resulting in the production and consumption of the first element in the selected unit timeframe
+      */
+      if (!!priorFirst.length) {
+        raw_metrics.unshift(priorFirst[0]);
+      }
+      // If there is no prior document, the first query have found the first metrics of the electrical counter during the selected unit timeframe
+      else {
+        noPriorData = true;
+      }
+    }
+    
     const counterData = raw_metrics.map(raw => _.omit(getMetricProof(raw), 'hardware_id'));
-    const metricsPerTimeUnit = getCounterMetricsByTimeUnit(counterData, byMomentIso);
+    const metricsPerTimeUnit = getCounterMetricsByTimeUnit(counterData, byMomentIso, noPriorData);
     
     return res.send({
       hardware_id: hwId,
