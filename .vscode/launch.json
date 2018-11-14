@@ -8,7 +8,9 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceFolder}/index.js"
+            "sourceMaps": true,
+            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/babel-node",
+            "program": "${workspaceFolder}/src/index.js"
         },
         {
             "type": "node",
@@ -21,6 +23,19 @@
                 "--opts", 
                 "${workspaceFolder}/support/mocha.opts",
                 "${workspaceFolder}/test/metricProof.test.js"
+            ],
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Test bills",
+            "sourceMaps": true,
+            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/babel-node",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "args": [
+                "--opts", 
+                "${workspaceFolder}/support/mocha.opts",
+                "${workspaceFolder}/test/billStore.test.js"
             ],
         }
     ]
